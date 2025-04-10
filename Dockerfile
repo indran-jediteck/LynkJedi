@@ -24,4 +24,5 @@ RUN echo "MONGO_URI=mongodb://mongo:27017" > .env && \
 EXPOSE 8080
 
 # Command to run the application
-CMD ["python", "run.py"]
+# Use uvicorn directly with the PORT environment variable
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}
