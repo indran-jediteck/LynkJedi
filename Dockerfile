@@ -20,7 +20,8 @@ RUN echo "MONGO_URI=mongodb://mongo:27017" > .env && \
     echo "EMAIL_FROM=noreply@example.com" >> .env
 
 # Expose the port the app runs on
-EXPOSE 8001
+# Default to 8001 but Cloud Run will override with PORT env var
+EXPOSE 8080
 
 # Command to run the application
 CMD ["python", "run.py"]
