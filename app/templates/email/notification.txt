@@ -1,0 +1,16 @@
+{{ subject }}
+
+Hello {{ recipient_name }},
+
+{{ message }}
+
+{% if action_url %}
+{{ action_text|default('Click Here') }}: {{ action_url }}
+{% endif %}
+
+Thank you,
+The LynkJedi Team
+
+---
+This is an automated message from LynkJedi. Please do not reply to this email.
+© {{ current_year }} LynkJedi. All rights reserved.

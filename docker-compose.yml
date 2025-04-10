@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8001:8001"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+      - MONGO_DB=lynkjedi_db
+      # Add your SMTP settings here if needed
+      # - SMTP_SERVER=your_smtp_server
+      # - SMTP_PORT=587
+      # - SMTP_USERNAME=your_username
+      # - SMTP_PASSWORD=your_password
+      # - EMAIL_FROM=your_email
+    depends_on:
+      - mongo
+    volumes:
+      - ./app:/app/app  # For development hot-reload
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
