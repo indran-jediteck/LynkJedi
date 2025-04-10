@@ -89,3 +89,39 @@ class MongoService:
     async def delete_cron_job(self, job_id: str) -> bool:
         result = await self.cron_collection.delete_one({"_id": ObjectId(job_id)})
         return result.deleted_count > 0
+
+    # Marketing contacts operations
+    async def create_or_update_marketing_contact(self, email: str, contact_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Create or update a marketing contact in the marketing collection.
+        If a contact with the given email already exists, it will be updated.
+        Otherwise, a new contact will be created.
+        
+        Args:
+            email: The email of the contact (used as unique identifier)
+            contact_data: The contact data to store
+            
+        Returns:
+            The created or updated contact document
+        """
+        # Initialize marketing collection if not already done
+        if not hasattr(self, 'marketing_collection'):
+            self.marketing_collection = self.db.marketing
+            
+        # Check if contact already exists
+        existing_contact = await self.marketing_collection.find_one({"email": email})
+        
+        if existing_contact:
+            # Update existing contact
+            await self.marketing_collection.update_one(
+                {"email": email},
+                {"$set": contact_data}
+            )
+            updated_contact = await self.marketing_collection.find_one({"email": email})
+            return updated_contact
+        else:
+            # Create new contact
+            contact_data["email"] = email
+            result = await self.marketing_collection.insert_one(contact_data)
+            contact_data["_id"] = result.inserted_id
+            return contact_data

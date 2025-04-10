@@ -1,0 +1,29 @@
+Welcome to Lynk AI, {{name}}! 👋**
+
+We're excited to help {{company}} streamline operations using AI.
+
+You now get a **free trial** of our AI Sales Agent — a powerful assistant you can wire directly to your website. It works 24/7 to:
+
+- Capture leads automatically  
+- Answer customer questions about your products or services  
+- Follow up with email automation  
+- Potentially increase your sales by **30% to 60%**
+
+But that’s not all. Lynk AI also helps you:
+
+- **Automate document processing** with 99.9% accuracy  
+- **Handle denied or underpaid claims** and accelerate reimbursements  
+- **Build custom workflows** using our no-code Flow Generator
+
+🎥 Watch our 45-second intro:  
+https://www.youtube.com/shorts/lDVL93ekA3A
+
+🚀 Start your free trial now:  
+https://lynkai.jediteck.com/
+
+Best regards,
+Indran Saha
+Founder & CEO, JediTeck
+📞 408-228-4877
+📧 indran@jediteck.com  
+🔗 LinkedIn: https://www.linkedin.com/in/indran-saha-34565126a/

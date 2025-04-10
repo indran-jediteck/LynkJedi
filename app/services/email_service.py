@@ -11,7 +11,7 @@ class EmailService:
         templates_dir = Path(__file__).parent.parent / "templates"
         self.env = Environment(loader=FileSystemLoader(templates_dir))
         
-    async def send_email(self, recipient: str, subject: str, template_name: str, template_data: dict) -> bool:
+    async def send_email(self, recipient: str, cc: str, subject: str, template_name: str, template_data: dict) -> bool:
         """
         Send an email with both HTML and text versions using templates.
         
@@ -26,11 +26,14 @@ class EmailService:
         """
         try:
             # Create message container
+           
+            print(f"Template data: {template_data}")
             msg = MIMEMultipart('alternative')
-            msg['From'] = settings.EMAIL_FROM
+            msg['From'] = settings.SMTP_FROM
             msg['To'] = recipient
+            msg['CC'] = cc
             msg['Subject'] = subject
-            
+
             # Render text and HTML templates
             text_template = self.env.get_template(f"email/{template_name}.txt")
             html_template = self.env.get_template(f"email/{template_name}.html")
@@ -51,7 +54,8 @@ class EmailService:
                 port=settings.SMTP_PORT,
                 username=settings.SMTP_USERNAME,
                 password=settings.SMTP_PASSWORD,
-                use_tls=True
+                start_tls=True,
+                use_tls=False
             )
             
             return True
