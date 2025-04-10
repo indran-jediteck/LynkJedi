@@ -68,6 +68,7 @@ async def send_welcome_email(email, first_name=None, company_name=None, mongo_se
             # Default template if mongo_service is not available
             template_name = "welcome_email" if first_name else "welcome_email_noname"
 
+        print(f"Using template: {template_name}")
         # Send welcome email using  template
         success = await email_service.send_email(
             recipient=email,
