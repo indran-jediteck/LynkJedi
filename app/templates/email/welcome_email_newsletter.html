@@ -1,0 +1,75 @@
+<!-- templates/chat_welcome_email.html -->
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      /* Mobile styles */
+      @media only screen and (max-width: 600px) {
+        .header-logo {
+          height: 48px !important;
+          width: auto !important;
+          max-width: 80% !important;
+        }
+        .header {
+          padding: 15px !important;
+        }
+        .cta-button {
+          display: block !important;
+          width: 100% !important;
+          margin-bottom: 10px !important;
+        }
+      }
+    </style>
+  </head>
+  <body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f9f9f9;">
+
+    <!-- Header -->
+    <div class="header" style="background: linear-gradient(to right, #4d8aff, #8e2de2); padding: 20px; text-align: center;">
+      <img src="https://www.jediteck.com/images/white_on_transparent.png"
+           alt="Lynk AI Logo"
+           class="header-logo"
+           style="height: 36px; width: auto; max-width: 100%; display: block; margin: 0 auto;" />
+    </div>
+
+    <!-- Email Body -->
+    <div style="padding: 20px;">
+      <h2 style="margin-top: 0;">👋 Welcome to Lynk AI, {{name}}!</h2>
+      <p>We're excited to help {{company}} streamline operations using AI.</p>
+
+      <p>You now get a <strong>free trial</strong> of our AI Sales Agent — a powerful assistant you can wire directly to your website. It works <strong>24/7</strong> to:</p>
+      <ul>
+        <li>Capture leads automatically</li>
+        <li>Answer customer questions about your products or services</li>
+        <li>Follow up with email automation</li>
+        <li>Potentially increase your sales by <strong>30% to 60%</strong></li>
+      </ul>
+
+      <p>But that's not all. Lynk AI also helps you:</p>
+      <ul>
+        <li><strong>Automate document processing</strong> with 99.9% accuracy</li>
+        <li><strong>Handle denied or underpaid claims</strong> and accelerate reimbursements</li>
+        <li><strong>Build custom workflows</strong> using our no-code Flow Generator</li>
+      </ul>
+
+      <!-- CTA Buttons -->
+      <div style="margin-top: 20px;">
+        <a href="https://www.youtube.com/shorts/lDVL93ekA3A"
+           class="cta-button"
+           style="display: inline-block; margin-right: 10px; padding: 10px 15px; background-color: #8e2de2; color: white; text-decoration: none; border-radius: 5px;">▶ Watch 45-sec Intro</a>
+        <a href="https://lynkai.jediteck.com/"
+           class="cta-button"
+           style="display: inline-block; padding: 10px 15px; background-color: #4d8aff; color: white; text-decoration: none; border-radius: 5px;">🚀 Start Free Trial</a>
+      </div>
+
+      <!-- Signature -->
+      <div style="margin-top: 40px; font-size: 14px; color: #333;">
+        <p style="margin: 0;"><strong>Indran Saha</strong></p>
+        <p style="margin: 0;">Founder & CEO, JediTeck</p>
+        <p style="margin: 0;">📞 408-228-4877</p>
+        <p style="margin: 0;">📧 <a href="mailto:indran@jediteck.com" style="color: #4d8aff;">indran@jediteck.com</a></p>
+        <p style="margin: 0;">🔗 <a href="https://www.linkedin.com/in/indran-saha-34565126a/" target="_blank" style="color: #4d8aff;">Connect on LinkedIn</a></p>
+      </div>
+    </div>
+
+  </body>
+</html>

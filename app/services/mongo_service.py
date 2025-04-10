@@ -12,6 +12,7 @@ class MongoService:
         self.db = self.client.get_default_database()
         self.events_collection = self.db.events
         self.cron_collection = self.db.cron_jobs
+        self.marketing_collection = self.db.marketing
 
     # Event operations
     async def get_all_events(self, limit: int = 100, skip: int = 0) -> List[EventModel]:
@@ -104,10 +105,6 @@ class MongoService:
         Returns:
             The created or updated contact document
         """
-        # Initialize marketing collection if not already done
-        if not hasattr(self, 'marketing_collection'):
-            self.marketing_collection = self.db.marketing
-            
         # Check if contact already exists
         existing_contact = await self.marketing_collection.find_one({"email": email})
         
