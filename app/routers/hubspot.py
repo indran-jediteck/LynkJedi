@@ -26,7 +26,9 @@ async def send_welcome_email(email, first_name=None, company_name=None):
     try:
         # Prepare template data with more parameters
         print(f"Sending welcome email to {email} with first_name: {first_name}, company_name: {company_name}")
-
+        
+        current_time = datetime.now()
+        
         template_data = {
             "email": email,
             "name": (first_name or "").capitalize(),  # Default to "there" if first_name is None
@@ -35,7 +37,7 @@ async def send_welcome_email(email, first_name=None, company_name=None):
             "contact_email": settings.SMTP_FROM,
             "company_name": "JediTeck",
             "support_email": "support@jediteck.com",
-            "website_url": "[https://jediteck.com](https://jediteck.com)",
+            "website_url": "https://jediteck.com",
             "current_year": "2025"
         }
         
@@ -50,11 +52,21 @@ async def send_welcome_email(email, first_name=None, company_name=None):
         
         if success:
             logger.info(f"Welcome email sent to {email}")
+            return {
+                "success": True, 
+                "subject": f"Welcome to {settings.APP_NAME}", 
+                "message": f"Welcome email sent to {email}", 
+                "sentAt": current_time.isoformat(), 
+                "messageType": "welcome", 
+                "status": "sent", 
+                "sentSuccessfully": True
+            }
         else:
             logger.error(f"Failed to send welcome email to {email}")
-            
+            return {"success": False, "message": "Failed to send welcome email"}
     except Exception as e:
         logger.error(f"Error sending welcome email to {email}: {str(e)}")
+        return {"success": False, "message": f"Error sending welcome email: {str(e)}"}
 
 def get_contact_details(object_id):
     """
@@ -155,7 +167,30 @@ async def hubspot_webhook(
         stored_event = await mongo_service.create_event(event)
         
         # Send welcome email
-        await send_welcome_email(contact_details["email"], contact_details.get("firstname"), contact_details.get("company"))
+        success = await send_welcome_email(contact_details["email"], contact_details.get("firstname"), contact_details.get("company"))
+        # {"success": True , "subject": f"Welcome to {settings.APP_NAME}", "message": f"Welcome email sent to {contact_details['email']}", "sentAt": current_time.isoformat(), "messageType": "welcome", "status": "sent", "sentSuccessfully": True}
+    
+        if "communications" not in contact_data:
+            contact_data["communications"] = []
+        if success["success"]:
+            # Add the welcome email to communications
+            contact_data["communications"].append({
+                "type": "email",
+                "subject": success["subject"],
+                "content": success["message"],
+                "sentAt": success["sentAt"],
+                "messageType": "welcome",
+                "status": "sent",
+                "sentSuccessfully": True
+            })
+
+            # Update the timestamp
+            contact_data["lastCommunication"] = success["sentAt"]
+
+            await mongo_service.create_or_update_marketing_contact(
+                email=contact_details["email"],
+                contact_data=contact_data
+            )
 
         return {
             "status": "success",
