@@ -19,5 +19,7 @@ steps:
   - '--platform'
   - 'managed'
   - '--allow-unauthenticated'
+  - '--set-env-vars'
+  - 'MONGO_URI=${_MONGO_URI}'
 images:
 - 'gcr.io/$PROJECT_ID/lynkjedi:latest'

@@ -6,15 +6,14 @@ load_dotenv()
 
 class Settings(BaseSettings):
     APP_NAME: str = "LynkJedi"
-    MONGO_URI: str = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-    MONGO_DB: str = os.getenv("MONGO_DB", "lynkjedi_db")
+    MONGO_URI: str = os.getenv("MONGODB_URI")
     
     # Email settings
-    SMTP_SERVER: str = os.getenv("SMTP_SERVER", "smtp.example.com")
+    SMTP_SERVER: str = os.getenv("SMTP_HOST")
     SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
-    SMTP_USERNAME: str = os.getenv("SMTP_USERNAME", "")
-    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
-    EMAIL_FROM: str = os.getenv("EMAIL_FROM", "noreply@example.com")
+    SMTP_USERNAME: str = os.getenv("SMTP_USER", "")
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASS")
+    EMAIL_FROM: str = os.getenv("SMTP_USER")
     
     class Config:
         env_file = ".env"

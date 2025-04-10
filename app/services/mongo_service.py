@@ -6,8 +6,10 @@ from typing import List, Optional, Dict, Any
 
 class MongoService:
     def __init__(self):
+        # Connect to MongoDB using the URI
         self.client = AsyncIOMotorClient(settings.MONGO_URI)
-        self.db = self.client[settings.MONGO_DB]
+        # Get the default database from the URI
+        self.db = self.client.get_default_database()
         self.events_collection = self.db.events
         self.cron_collection = self.db.cron_jobs
 
@@ -31,6 +33,7 @@ class MongoService:
             event_dict.pop("_id", None)
         result = await self.events_collection.insert_one(event_dict)
         event_dict["_id"] = result.inserted_id
+        print("adding data to db", event_dict)
         return EventModel(**event_dict)
 
     async def update_event(self, event_id: str, event_data: Dict[str, Any]) -> Optional[EventModel]:
