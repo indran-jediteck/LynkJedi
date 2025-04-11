@@ -87,7 +87,8 @@ async def send_welcome_email(email, first_name=None, company_name=None, mongo_se
                 "sentAt": current_time.isoformat(), 
                 "messageType": "welcome", 
                 "status": "sent", 
-                "sentSuccessfully": True
+                "sentSuccessfully": True,
+                "template_name": template_name
             }
 
         else:
