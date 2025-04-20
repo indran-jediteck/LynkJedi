@@ -41,70 +41,63 @@ async def send_welcome_email(email, first_name=None, company_name=None, mongo_se
     try:
         # Prepare template data with more parameters
         print(f"Sending welcome email to {email} with first_name: {first_name}, company_name: {company_name}")
-
         # add the email checker to check if the email is valid
-        abstract_api_key = os.getenv("ABSTRACT_API_KEY")
-        response = requests.get(f"https://emailvalidation.abstractapi.com/v1/?api_key={abstract_api_key}&email={email}")
-        print(response.status_code)
-        print(response.content)
-        if response.status_code == 200:
-            data = response.json()
-            if data.get("is_valid_format"):
-                current_time = datetime.now()
-                template_data = {
-                    "email": email,
-                    "name": (first_name or "").capitalize(),  # Default to "there" if first_name is None
-                    "company": company_name or "",  # Empty string if company_name is None
-                    "app_name": settings.APP_NAME,
-                    "contact_email": settings.SMTP_FROM,
-                    "company_name": "JediTeck",
-                    "support_email": "support@jediteck.com",
-                    "website_url": "https://jediteck.com",
-                    "current_year": "2025"
-                }
-                # check of if the email already exist in marketing collection
-                if mongo_service:
-                    existing_contact = await mongo_service.marketing_collection.find_one({"email": email})
-                    if existing_contact and existing_contact.get("source") == "newsletter":
-                        logger.info(f"Contact {email} already exists in marketing collection as a newsletter signup")
-                        template_name="welcome_email_newsletter"
-                    else:   
-                        if first_name :
-                            template_name="welcome_email"
-                        else:
-                            template_name="welcome_email_noname"
+        if not email_service.is_valid_email(email):
+            logger.error(f"Invalid email: {email}")
+            return {"success": False, "message": "Invalid email"}
+        current_time = datetime.now()
+        template_data = {
+                "email": email,
+                "name": (first_name or "").capitalize(),  # Default to "there" if first_name is None
+                "company": company_name or "",  # Empty string if company_name is None
+                "app_name": settings.APP_NAME,
+                "contact_email": settings.SMTP_FROM,
+                "company_name": "JediTeck",
+                "support_email": "support@jediteck.com",
+                "website_url": "https://jediteck.com",
+                "current_year": "2025"
+            }
+        # check of if the email already exist in marketing collection
+        if mongo_service:
+            existing_contact = await mongo_service.marketing_collection.find_one({"email": email})
+            if existing_contact and existing_contact.get("source") == "newsletter":
+                logger.info(f"Contact {email} already exists in marketing collection as a newsletter signup")
+                template_name="welcome_email_newsletter"
+            else:   
+                if first_name :
+                    template_name="welcome_email"
                 else:
-                    # Default template if mongo_service is not available
-                    template_name = "welcome_email" if first_name else "welcome_email_noname"
+                    template_name="welcome_email_noname"
+        else:
+            # Default template if mongo_service is not available
+            template_name = "welcome_email" if first_name else "welcome_email_noname"
 
-                print(f"Using template: {template_name}")
-                # Send welcome email using  template
-                success = await email_service.send_email(
-                    recipient=email,
-                    cc=settings.SMTP_CC,
-                    subject=f"Welcome to {settings.APP_NAME}",
-                    template_name=template_name,
-                    template_data=template_data
-                )
-                if success:
-                    logger.info(f"Welcome email sent to {email}")
-                    return {
-                        "success": True, 
-                        "subject": f"Welcome to {settings.APP_NAME}", 
-                        "message": f"Welcome email sent to {email}", 
-                        "sentAt": current_time.isoformat(), 
-                        "messageType": "welcome", 
-                        "status": "sent", 
-                        "sentSuccessfully": True,
-                        "template_name": template_name
-                    }
-                else:
-                    logger.error(f"Failed to send welcome email to {email}")
-                    return {"success": False, "message": "Failed to send welcome email"}
-            else:
-                logger.error(f"Invalid email: {email}")
-                return {"success": False, "message": "Invalid email"}
+        print(f"Using template: {template_name}")
+        # Send welcome email using  template
+        success = await email_service.send_email(
+            recipient=email,
+            cc=settings.SMTP_CC,
+            subject=f"Welcome to {settings.APP_NAME}",
+            template_name=template_name,
+            template_data=template_data
+        )
+        
+        if success:
+            logger.info(f"Welcome email sent to {email}")
+            return {
+                "success": True, 
+                "subject": f"Welcome to {settings.APP_NAME}", 
+                "message": f"Welcome email sent to {email}", 
+                "sentAt": current_time.isoformat(), 
+                "messageType": "welcome", 
+                "status": "sent", 
+                "sentSuccessfully": True,
+                "template_name": template_name
+            }
 
+        else:
+            logger.error(f"Failed to send welcome email to {email}")
+            return {"success": False, "message": "Failed to send welcome email"}
     except Exception as e:
         logger.error(f"Error sending welcome email to {email}: {str(e)}")
         return {"success": False, "message": f"Error sending welcome email: {str(e)}"}
@@ -186,64 +179,72 @@ async def hubspot_webhook(
                     "hubspot_id": contact_id,
                     "hubspot_data": payload
                 }
-                
-                # Store in marketing contacts collection
-                await mongo_service.create_or_update_marketing_contact(
-                    email=contact_details["email"],
-                    contact_data=contact_data
-                )
-                
-                logger.info(f"Stored contact {contact_id} in marketing_contacts collection")
-        
-        # Create an event for each webhook notification
-        event = EventModel(
-            name="hubspot_webhook",
-            description="HubSpot webhook notification",
-            data=payload,
-            processed=False,
-            timestamp=datetime.now()
-        )
-        
-        # Store the event in MongoDB
-        stored_event = await mongo_service.create_event(event)
-        
-        # Send welcome email
-        success = await send_welcome_email(
-            email=contact_details["email"], 
-            first_name=contact_details.get("firstname"), 
-            company_name=contact_details.get("company"),
-            mongo_service=mongo_service
-        )
-        # {"success": True , "subject": f"Welcome to {settings.APP_NAME}", "message": f"Welcome email sent to {contact_details['email']}", "sentAt": current_time.isoformat(), "messageType": "welcome", "status": "sent", "sentSuccessfully": True}
-    
-        if "communications" not in contact_data:
-            contact_data["communications"] = []
-        if success["success"]:
-            # Add the welcome email to communications
-            contact_data["communications"].append({
-                "type": "email",
-                "subject": success["subject"],
-                "content": success["message"],
-                "sentAt": success["sentAt"],
-                "messageType": "welcome",
-                "status": "sent",
-                "sentSuccessfully": True
-            })
+                 abstract_api_key = os.getenv("ABSTRACT_API_KEY")
+                response = requests.get(f"https://emailvalidation.abstractapi.com/v1/?api_key={abstract_api_key}&email={email}")
+                print(response.status_code)
+                print(response.content)
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get("is_valid_format") and data.get("deliverability") == "DELIVERABLE":
+                         # Store in marketing contacts collection
+                        await mongo_service.create_or_update_marketing_contact(
+                            email=contact_details["email"],
+                            contact_data=contact_data
+                        )
+                        
+                        logger.info(f"Stored contact {contact_id} in marketing_contacts collection")
+                                                
+                        # Create an event for each webhook notification
+                        event = EventModel(
+                            name="hubspot_webhook",
+                            description="HubSpot webhook notification",
+                            data=payload,
+                            processed=False,
+                            timestamp=datetime.now()
+                        )
+                        
+                        # Store the event in MongoDB
+                        stored_event = await mongo_service.create_event(event)
+                        
+                        # Send welcome email
+                        success = await send_welcome_email(
+                            email=contact_details["email"], 
+                            first_name=contact_details.get("firstname"), 
+                            company_name=contact_details.get("company"),
+                            mongo_service=mongo_service
+                        )
+                        # {"success": True , "subject": f"Welcome to {settings.APP_NAME}", "message": f"Welcome email sent to {contact_details['email']}", "sentAt": current_time.isoformat(), "messageType": "welcome", "status": "sent", "sentSuccessfully": True}
+                    
+                        if "communications" not in contact_data:
+                            contact_data["communications"] = []
+                        if success["success"]:
+                            # Add the welcome email to communications
+                            contact_data["communications"].append({
+                                "type": "email",
+                                "subject": success["subject"],
+                                "content": success["message"],
+                                "sentAt": success["sentAt"],
+                                "messageType": "welcome",
+                                "status": "sent",
+                                "sentSuccessfully": True
+                            })
 
-            # Update the timestamp
-            contact_data["lastCommunication"] = success["sentAt"]
+                            # Update the timestamp
+                            contact_data["lastCommunication"] = success["sentAt"]
 
-            await mongo_service.create_or_update_marketing_contact(
-                email=contact_details["email"],
-                contact_data=contact_data
-            )
-
+                            await mongo_service.create_or_update_marketing_contact(
+                                email=contact_details["email"],
+                                contact_data=contact_data
+                            )
+                    else:
+                        print("Email is invalid")
+                else:
+                    print("Error checking email")
         return {
             "status": "success",
             "message": "Webhook received and processed",
             "event_id": str(stored_event.id)
         }
-        
     except Exception as e:
         logger.error(f"Error processing HubSpot webhook: {str(e)}")
         raise HTTPException(
