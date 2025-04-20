@@ -3,7 +3,7 @@ from ..models.models import EmailRequest
 from ..services.email_service import EmailService
 from ..services.mongo_service import MongoService
 from typing import Dict, Any
-import openai
+
 import os
 from fastapi.security.api_key import APIKeyHeader
 from starlette.status import HTTP_403_FORBIDDEN
@@ -15,7 +15,7 @@ router = APIRouter(
     responses={404: {"description": "Not found"}}
 )
 # Configure OpenAI with API key from environment
-client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 # Set up API key authentication
 API_KEY = os.getenv("INTERNAL_API_KEY")
 API_KEY_NAME = "X-API-Key"
@@ -53,33 +53,6 @@ async def send_email(
     
     return {"message": f"Email to {email_request.recipient} has been queued"}
 
-
-async def generate_email_from_llm(user_context, marketing_email_gen_prompt):
-    """
-    user_context: dict with keys
-      - email
-      - previous_emails: list of {messageType, sentAt}
-      - engagement: {opened_last_email: bool, clicked: bool, trial_status: str}
-      - available_assets: list of {type, title, url}
-    """
-    try:
-        # Use the new OpenAI API format (v1.0.0+)
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": marketing_email_gen_prompt},
-                {"role": "user", "content": str(user_context)}
-            ],
-            temperature=0.7
-        )
-
-        generated_content = response.choices[0].message.content
-        return {"message": generated_content}
-
-    except Exception as e:
-        print(f"Error generating email: {str(e)}")
-        return {"message": f"Error generating email: {str(e)}"}
-    
 
 @router.post("/marketing_email", response_model=Dict[str, str])
 async def generate_marketing_email(
