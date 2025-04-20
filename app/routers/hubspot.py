@@ -41,10 +41,7 @@ async def send_welcome_email(email, first_name=None, company_name=None, mongo_se
     try:
         # Prepare template data with more parameters
         print(f"Sending welcome email to {email} with first_name: {first_name}, company_name: {company_name}")
-        # add the email checker to check if the email is valid
-        if not email_service.is_valid_email(email):
-            logger.error(f"Invalid email: {email}")
-            return {"success": False, "message": "Invalid email"}
+        
         current_time = datetime.now()
         template_data = {
                 "email": email,
@@ -57,14 +54,14 @@ async def send_welcome_email(email, first_name=None, company_name=None, mongo_se
                 "website_url": "https://jediteck.com",
                 "current_year": "2025"
             }
-        # check of if the email already exist in marketing collection
+        # check if the email already exists in marketing collection
         if mongo_service:
             existing_contact = await mongo_service.marketing_collection.find_one({"email": email})
             if existing_contact and existing_contact.get("source") == "newsletter":
                 logger.info(f"Contact {email} already exists in marketing collection as a newsletter signup")
                 template_name="welcome_email_newsletter"
             else:   
-                if first_name :
+                if first_name:
                     template_name="welcome_email"
                 else:
                     template_name="welcome_email_noname"
@@ -73,7 +70,7 @@ async def send_welcome_email(email, first_name=None, company_name=None, mongo_se
             template_name = "welcome_email" if first_name else "welcome_email_noname"
 
         print(f"Using template: {template_name}")
-        # Send welcome email using  template
+        # Send welcome email using template
         success = await email_service.send_email(
             recipient=email,
             cc=settings.SMTP_CC,
@@ -94,7 +91,6 @@ async def send_welcome_email(email, first_name=None, company_name=None, mongo_se
                 "sentSuccessfully": True,
                 "template_name": template_name
             }
-
         else:
             logger.error(f"Failed to send welcome email to {email}")
             return {"success": False, "message": "Failed to send welcome email"}
@@ -179,6 +175,8 @@ async def hubspot_webhook(
                     "hubspot_id": contact_id,
                     "hubspot_data": payload
                 }
+                email = contact_details["email"]
+
                 abstract_api_key = os.getenv("ABSTRACT_API_KEY")
                 response = requests.get(f"https://emailvalidation.abstractapi.com/v1/?api_key={abstract_api_key}&email={email}")
                 print(response.status_code)
@@ -243,7 +241,6 @@ async def hubspot_webhook(
         return {
             "status": "success",
             "message": "Webhook received and processed",
-            "event_id": str(stored_event.id)
         }
     except Exception as e:
         logger.error(f"Error processing HubSpot webhook: {str(e)}")
