@@ -179,7 +179,7 @@ async def hubspot_webhook(
                     "hubspot_id": contact_id,
                     "hubspot_data": payload
                 }
-                 abstract_api_key = os.getenv("ABSTRACT_API_KEY")
+                abstract_api_key = os.getenv("ABSTRACT_API_KEY")
                 response = requests.get(f"https://emailvalidation.abstractapi.com/v1/?api_key={abstract_api_key}&email={email}")
                 print(response.status_code)
                 print(response.content)
