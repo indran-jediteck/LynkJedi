@@ -11,7 +11,7 @@ COPY . .
 
 # Expose the port the app runs on
 # Default to 8001 but Cloud Run will override with PORT env var
-EXPOSE 8080
+EXPOSE 8001
 
 # Command to run the application
 # Use the Cloud Run specific entry point
