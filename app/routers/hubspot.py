@@ -12,6 +12,7 @@ from ..services.email_service import EmailService
 from ..config import settings
 from fastapi.security.api_key import APIKeyHeader
 from starlette.status import HTTP_403_FORBIDDEN
+import requests
 
 access_token = os.getenv("HUBSPOT_TOKEN")
 client = HubSpot(access_token=access_token)
@@ -41,59 +42,69 @@ async def send_welcome_email(email, first_name=None, company_name=None, mongo_se
         # Prepare template data with more parameters
         print(f"Sending welcome email to {email} with first_name: {first_name}, company_name: {company_name}")
 
-        current_time = datetime.now()
-        template_data = {
-                "email": email,
-                "name": (first_name or "").capitalize(),  # Default to "there" if first_name is None
-                "company": company_name or "",  # Empty string if company_name is None
-                "app_name": settings.APP_NAME,
-                "contact_email": settings.SMTP_FROM,
-                "company_name": "JediTeck",
-                "support_email": "support@jediteck.com",
-                "website_url": "https://jediteck.com",
-                "current_year": "2025"
-            }
-        # check of if the email already exist in marketing collection
-        if mongo_service:
-            existing_contact = await mongo_service.marketing_collection.find_one({"email": email})
-            if existing_contact and existing_contact.get("source") == "newsletter":
-                logger.info(f"Contact {email} already exists in marketing collection as a newsletter signup")
-                template_name="welcome_email_newsletter"
-            else:   
-                if first_name :
-                    template_name="welcome_email"
+        # add the email checker to check if the email is valid
+        abstract_api_key = os.getenv("ABSTRACT_API_KEY")
+        response = requests.get(f"https://emailvalidation.abstractapi.com/v1/?api_key={abstract_api_key}&email={email}")
+        print(response.status_code)
+        print(response.content)
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("is_valid_format"):
+                current_time = datetime.now()
+                template_data = {
+                    "email": email,
+                    "name": (first_name or "").capitalize(),  # Default to "there" if first_name is None
+                    "company": company_name or "",  # Empty string if company_name is None
+                    "app_name": settings.APP_NAME,
+                    "contact_email": settings.SMTP_FROM,
+                    "company_name": "JediTeck",
+                    "support_email": "support@jediteck.com",
+                    "website_url": "https://jediteck.com",
+                    "current_year": "2025"
+                }
+                # check of if the email already exist in marketing collection
+                if mongo_service:
+                    existing_contact = await mongo_service.marketing_collection.find_one({"email": email})
+                    if existing_contact and existing_contact.get("source") == "newsletter":
+                        logger.info(f"Contact {email} already exists in marketing collection as a newsletter signup")
+                        template_name="welcome_email_newsletter"
+                    else:   
+                        if first_name :
+                            template_name="welcome_email"
+                        else:
+                            template_name="welcome_email_noname"
                 else:
-                    template_name="welcome_email_noname"
-        else:
-            # Default template if mongo_service is not available
-            template_name = "welcome_email" if first_name else "welcome_email_noname"
+                    # Default template if mongo_service is not available
+                    template_name = "welcome_email" if first_name else "welcome_email_noname"
 
-        print(f"Using template: {template_name}")
-        # Send welcome email using  template
-        success = await email_service.send_email(
-            recipient=email,
-            cc=settings.SMTP_CC,
-            subject=f"Welcome to {settings.APP_NAME}",
-            template_name=template_name,
-            template_data=template_data
-        )
-        
-        if success:
-            logger.info(f"Welcome email sent to {email}")
-            return {
-                "success": True, 
-                "subject": f"Welcome to {settings.APP_NAME}", 
-                "message": f"Welcome email sent to {email}", 
-                "sentAt": current_time.isoformat(), 
-                "messageType": "welcome", 
-                "status": "sent", 
-                "sentSuccessfully": True,
-                "template_name": template_name
-            }
+                print(f"Using template: {template_name}")
+                # Send welcome email using  template
+                success = await email_service.send_email(
+                    recipient=email,
+                    cc=settings.SMTP_CC,
+                    subject=f"Welcome to {settings.APP_NAME}",
+                    template_name=template_name,
+                    template_data=template_data
+                )
+                if success:
+                    logger.info(f"Welcome email sent to {email}")
+                    return {
+                        "success": True, 
+                        "subject": f"Welcome to {settings.APP_NAME}", 
+                        "message": f"Welcome email sent to {email}", 
+                        "sentAt": current_time.isoformat(), 
+                        "messageType": "welcome", 
+                        "status": "sent", 
+                        "sentSuccessfully": True,
+                        "template_name": template_name
+                    }
+                else:
+                    logger.error(f"Failed to send welcome email to {email}")
+                    return {"success": False, "message": "Failed to send welcome email"}
+            else:
+                logger.error(f"Invalid email: {email}")
+                return {"success": False, "message": "Invalid email"}
 
-        else:
-            logger.error(f"Failed to send welcome email to {email}")
-            return {"success": False, "message": "Failed to send welcome email"}
     except Exception as e:
         logger.error(f"Error sending welcome email to {email}: {str(e)}")
         return {"success": False, "message": f"Error sending welcome email: {str(e)}"}
