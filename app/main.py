@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import events, cron, email, hubspot
+from .routers import events, cron, email, hubspot, metrics
 from .config import settings
 import uvicorn
 import os
@@ -26,6 +26,7 @@ app.include_router(events.router)
 app.include_router(cron.router)
 app.include_router(email.router)
 app.include_router(hubspot.router)
+app.include_router(metrics.router)
 
 @app.get("/")
 async def root():
