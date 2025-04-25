@@ -34,7 +34,7 @@ async def increment_agent_count(
     api_key: str = Depends(verify_api_key)
 ):
     """
-    Increment the agent_Count field in the system_metrics collection.
+    Increment the agent_count field in the system_metrics collection.
     Creates the field if it doesn't exist.
     Requires a valid API key in the X-API-Key header.
     """
@@ -42,13 +42,13 @@ async def increment_agent_count(
         # Update the document and return the new value
         result = await mongo_service.db.system_metrics.find_one_and_update(
             {},  # empty filter to match the first document
-            {"$inc": {"agent_Count": 1}},  # increment by 1
+            {"$inc": {"agent_count": 1}},  # increment by 1
             upsert=True,  # create if doesn't exist
             return_document=True  # return the updated document
         )
         
         if result:
-            return {"agent_count": result.get("agent_Count", 1)}
+            return {"agent_count": result.get("agent_count", 1)}
         else:
             raise HTTPException(status_code=500, detail="Failed to update agent count")
             
